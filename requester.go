@@ -8,7 +8,8 @@ import (
 )
 
 type Requester struct {
-	server *httptest.Server
+	Server    *httptest.Server
+	Transport *http.Transport
 }
 
 func (requester *Requester) Get(route string) *Response {
@@ -42,7 +43,7 @@ func (requester *Requester) Do(request *http.Request) *Response {
 }
 
 func (requester *Requester) Url(route string) string {
-	return requester.server.Listener.Addr().String() + route
+	return requester.Server.Listener.Addr().String() + route
 }
 
 func (requester *Requester) performRequest(httpAction, route, contentType, body string) *Response {
@@ -56,7 +57,12 @@ func (requester *Requester) performRequest(httpAction, route, contentType, body 
 }
 
 func (requester *Requester) sendRequest(request *http.Request) *Response {
-	client := http.Client{}
+	var client http.Client
+	if requester.Transport != nil {
+		client = http.Client{Transport: requester.Transport}
+	} else {
+		client = http.Client{}
+	}
 	response, err := client.Do(request)
 	if err != nil {
 		panic(err)
